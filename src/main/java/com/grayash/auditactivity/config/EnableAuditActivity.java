@@ -9,12 +9,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.springframework.context.annotation.Import;
-import org.springframework.scheduling.annotation.AsyncConfigurationSelector;
+
+import com.grayash.auditactivity.utils.AuditActivityAspectImportSelector;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import(AuditActivityAspectConfig.class)
+@Import(AuditActivityAspectImportSelector.class)
 public @interface EnableAuditActivity {
 	
 	String serviceName() default "";

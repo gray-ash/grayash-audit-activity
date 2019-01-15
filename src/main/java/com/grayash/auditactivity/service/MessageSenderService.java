@@ -12,11 +12,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grayash.auditactivity.config.RabbitConfig;
 import com.grayash.auditactivity.model.ActivityData;
 
+
+@Service
 public class MessageSenderService {
-	
-	
-	@Autowired
-	private ObjectMapper objectMapper;
 	
 	
 	@Autowired
@@ -24,6 +22,7 @@ public class MessageSenderService {
 	 
 	public void send(ActivityData data) {
 	    try {
+	    	ObjectMapper objectMapper = new ObjectMapper();
 	        String orderJson = objectMapper.writeValueAsString(data);
 	        Message message = MessageBuilder
 	                            .withBody(orderJson.getBytes())
