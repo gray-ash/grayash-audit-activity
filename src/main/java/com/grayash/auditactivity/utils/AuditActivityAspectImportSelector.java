@@ -2,14 +2,12 @@ package com.grayash.auditactivity.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ImportSelector;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
 
-import com.grayash.auditactivity.aspect.AuditActivityAspect;
 import com.grayash.auditactivity.config.EnableAuditActivity;
 
 import lombok.Data;
