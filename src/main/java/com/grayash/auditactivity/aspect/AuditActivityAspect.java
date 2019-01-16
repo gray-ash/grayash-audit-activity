@@ -6,6 +6,7 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -16,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.ServletWebRequest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.grayash.auditactivity.exception.PCRuntimeException;
 import com.grayash.auditactivity.model.ActivityData;
 import com.grayash.auditactivity.model.ActivityType;
@@ -63,7 +66,7 @@ public class AuditActivityAspect {
 			logData.setResponseCode(entity.getStatusCode().toString());
 
 			if (Log.isDebugEnabled())
-				Log.debug("Activity Log::" + logData);
+				Log.debug("Activity Log for EXCEPTION::" + logData);
 			messageSenderService().send(logData);
 
 		} catch (Exception e) {
@@ -86,19 +89,17 @@ public class AuditActivityAspect {
 			ResponseEntity entity = (ResponseEntity) result;
 			String requestUrl = servletRequest.getRequestURI().toString();
 			String csid = servletRequest.getHeader("csid");
-			String appId = servletRequest.getHeader("appId");
 			ActivityData logData = new ActivityData();
 			logData.setActivityData(CommonUtils.constructJsonResponse(entity.getBody()));
 			logData.setActivityType(ActivityType.RESPONSE);
-			logData.setAppId(appId);
 			logData.setCustomerId(csid);
 			logData.setRequestUrl(requestUrl);
 			logData.setServiceName(serviceName);
 			logData.setSpanId(MDC.get("spanId"));
-			logData.setTraceId(MDC.get("spanId"));
+			logData.setTraceId(MDC.get("traceId"));
 			logData.setResponseCode(entity.getStatusCode().toString());
 			if (Log.isDebugEnabled())
-				Log.debug("Activity Log::" + logData);
+				Log.debug("Activity Log for RESPONSE::" + logData);
 			messageSenderService().send(logData);
 
 		} catch (Exception e) {
@@ -113,6 +114,7 @@ public class AuditActivityAspect {
 			String serviceName = (String) BaseProfile.getInstance().getProperty("grayash-aspect-serviceName");
 			Object[] arr = joinPoint.getArgs();
 			String request = null;
+			JSONObject cmnReq=null;
 			HttpServletRequest servletRequest = null;
 			HttpHeaders headers = null;
 			for (Object obj : arr) {
@@ -120,23 +122,37 @@ public class AuditActivityAspect {
 					servletRequest = (HttpServletRequest) obj;
 				else if (obj instanceof HttpHeaders)
 					headers = (HttpHeaders) obj;
-				else
+				else {
+					try {
+						cmnReq = new JSONObject(obj);
+						cmnReq = cmnReq.getJSONObject("appData");
+						if(Log.isDebugEnabled())
+							Log.debug("appData values are:::"+cmnReq);
+					} catch (Exception e) {
+						if(Log.isErrorEnabled())
+							Log.error("Can not convert to CommonRequest"+e.getMessage());
+					}
 					request = CommonUtils.constructJsonResponse(obj);
+				}
 			}
 			String requestUrl = servletRequest.getRequestURI().toString();
 			String csid = servletRequest.getHeader("csid");
-			String appId = servletRequest.getHeader("appId");
 			ActivityData logData = new ActivityData();
 			logData.setActivityData(request);
 			logData.setActivityType(ActivityType.REQUEST);
-			logData.setAppId(appId);
 			logData.setCustomerId(csid);
 			logData.setRequestUrl(requestUrl);
 			logData.setServiceName(serviceName);
 			logData.setSpanId(MDC.get("spanId"));
-			logData.setTraceId(MDC.get("spanId"));
+			logData.setTraceId(MDC.get("traceId"));
+			if(cmnReq!=null) {
+				logData.setOs(cmnReq.get("os").toString());
+				logData.setIsp(cmnReq.get("isp").toString());
+				logData.setIp(cmnReq.get("ip").toString());
+				logData.setOsVersion(cmnReq.get("osVersion").toString());
+			}
 			if (Log.isDebugEnabled())
-				Log.debug("Activity Log::" + logData);
+				Log.debug("Activity Log for REQUEST::" + logData);
 			messageSenderService().send(logData);
 		} catch (Exception ex) {
 			ex.printStackTrace();

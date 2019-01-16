@@ -11,7 +11,6 @@ import lombok.ToString;
 public class ActivityData implements Serializable{
 	
 	private String customerId;
-	private String appId;
 	private String requestUrl;
 	private ActivityType activityType;
 	private String activityData;
